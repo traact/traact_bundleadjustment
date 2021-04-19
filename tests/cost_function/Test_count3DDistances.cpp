@@ -29,35 +29,34 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTMULTI_BATARGET_H
-#define TRAACTMULTI_BATARGET_H
 
-#include <traact/spatial.h>
-#include "BAData.h"
+#include <gtest/gtest.h>
+#include <traact/ba/cost_function/CostFunctionUtils.h>
 
-namespace traact::ba {
-    class BATarget : public BAData<spatial::Position3DList>{
-    public:
-        typedef typename std::shared_ptr<BATarget> Ptr;
-        void SetTargetData(spatial::Position3DList model_points);
-        spatial::Position3DList GetTargetData();
-        void SetStdDev(double stddev);
-        double GetStdDev();
-        void SetUseTargetResidual(bool value);
-        bool IsUseTargetResidual();
-
-        std::string toString();
-
-    protected:
-        spatial::Position3DList model_;
-        double residual_stddev_{1.0};
-        bool use_target_residual_{false};
-
-
-    };
+TEST(count3DDistances, N_0) {
+    using namespace traact::ba;
+    EXPECT_EQ(count3DDistances(0), 0);
 }
 
+TEST(count3DDistances, N_1) {
+    using namespace traact::ba;
+    EXPECT_EQ(count3DDistances(1), 0);
+}
 
+TEST(count3DDistances, N_2) {
+    using namespace traact::ba;
+    EXPECT_EQ(count3DDistances(2), 1);
+}
 
+TEST(count3DDistances, N_3) {
+    using namespace traact::ba;
 
-#endif //TRAACTMULTI_BATARGET_H
+    EXPECT_EQ(count3DDistances(3), 3);
+
+}
+
+TEST(count3DDistances, N_4) {
+    using namespace traact::ba;
+
+    EXPECT_EQ(count3DDistances(4), 6);
+}

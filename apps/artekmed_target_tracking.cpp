@@ -64,6 +64,8 @@ void addTracking(const traact::DefaultInstanceGraphPtr& pattern_graph_ptr, doubl
     using namespace traact;
     using namespace traact::dataflow;
 
+    bool with_renderer = true;
+
     DefaultPatternInstancePtr
             source_pattern = pattern_graph_ptr->addPattern(getIdxName("source",idx),myfacade->instantiatePattern("KinectAzureSingleFilePlayer"));
     DefaultPatternInstancePtr
@@ -77,12 +79,18 @@ void addTracking(const traact::DefaultInstanceGraphPtr& pattern_graph_ptr, doubl
     DefaultPatternInstancePtr
             write_2dlist = pattern_graph_ptr->addPattern(getIdxName("write_2dList",idx), myfacade->instantiatePattern("FileRecorder_cereal_spatial:Position2DList"));
 
-//    DefaultPatternInstancePtr
-//            render_image = pattern_graph_ptr->addPattern(getIdxName("render_image",idx), myfacade->instantiatePattern("RenderImage"));
-//    DefaultPatternInstancePtr
-//            render_points = pattern_graph_ptr->addPattern(getIdxName("render_points",idx), myfacade->instantiatePattern("RenderPosition2DList"));
-//    DefaultPatternInstancePtr
-//            render_pose6D = pattern_graph_ptr->addPattern(getIdxName("render_pose6D",idx), myfacade->instantiatePattern("RenderPose6D"));
+    DefaultPatternInstancePtr
+            render_image;
+    DefaultPatternInstancePtr
+            render_points;
+    DefaultPatternInstancePtr
+            render_pose6D;
+
+    if(with_renderer){
+                render_image = pattern_graph_ptr->addPattern(getIdxName("render_image",idx), myfacade->instantiatePattern("RenderImage"));
+                render_points = pattern_graph_ptr->addPattern(getIdxName("render_points",idx), myfacade->instantiatePattern("RenderPosition2DList"));
+                render_pose6D = pattern_graph_ptr->addPattern(getIdxName("render_pose6D",idx), myfacade->instantiatePattern("RenderPose6D"));
+    }
 
 
 
@@ -105,16 +113,21 @@ void addTracking(const traact::DefaultInstanceGraphPtr& pattern_graph_ptr, doubl
 
     pattern_graph_ptr->connect(getIdxName("estimate_pose",idx), "output_points", getIdxName("write_2dList",idx), "input");
 
-//    pattern_graph_ptr->connect(getIdxName("convert_6000",idx), "output", getIdxName("render_image",idx), "input");
-//    pattern_graph_ptr->connect(getIdxName("circle_tracking",idx), "output", getIdxName("render_points",idx), "input");
-//    pattern_graph_ptr->connect(getIdxName("undistorted",idx), "output_calibration", getIdxName("render_pose6D",idx), "input_calibration");
-//    pattern_graph_ptr->connect(getIdxName("estimate_pose",idx), "output", getIdxName("render_pose6D",idx), "input");
+    if(with_renderer){
+        pattern_graph_ptr->connect(getIdxName("convert_6000",idx), "output", getIdxName("render_image",idx), "input");
+        pattern_graph_ptr->connect(getIdxName("circle_tracking",idx), "output", getIdxName("render_points",idx), "input");
+        pattern_graph_ptr->connect(getIdxName("undistorted",idx), "output_calibration", getIdxName("render_pose6D",idx), "input_calibration");
+        pattern_graph_ptr->connect(getIdxName("estimate_pose",idx), "output", getIdxName("render_pose6D",idx), "input");
+
+        render_points->pattern_pointer.parameter["window"]["value"] = getIdxName("render_image",idx);
+        render_pose6D->pattern_pointer.parameter["window"]["value"] = getIdxName("render_image",idx);
+    }
+
 
     source_pattern->pattern_pointer.parameter["file"]["value"] = mkv_file;
     convert_pattern_6000->pattern_pointer.parameter["irToGray"]["value"] = ir2gray;
     estimate_pose->pattern_pointer.parameter["forceZFaceCamera"]["value"] = false;
-//    render_points->pattern_pointer.parameter["window"]["value"] = getIdxName("render_image",idx);
-//    render_pose6D->pattern_pointer.parameter["window"]["value"] = getIdxName("render_image",idx);
+
 
     write_2dlist->pattern_pointer.parameter["file"]["value"] = result_file;
 

@@ -66,78 +66,43 @@ namespace traact::ba {
 
     };
 
+    constexpr std::size_t factorial(std::size_t n)
+    {
+        return n <= 1 ? 1 : (n * factorial(n - 1));
+    }
 
-    struct CeresBAProblemBase {
+    constexpr std::size_t count3DDistances(std::size_t n){
+        return n <= 1 ? 0 : (n-1 + count3DDistances(n - 1));
+    }
 
-        virtual ~CeresBAProblemBase() {
-            if(point_index_)
-                delete[] point_index_;
-            if(camera_index_)
-                delete[] camera_index_;
-            if(observations_)
-                delete[] observations_;
-            if(parameters_)
-                delete[] parameters_;
+    template<typename T>
+    void calculate3DDistancesSquared(const T* const point_data, T* result, std::size_t N) {
+
+        if(N < 2)
+            return;
+
+        T x0 = point_data[0];
+        T y0 = point_data[1];
+        T z0 = point_data[2];
+        for(std::size_t i=1;i<N;++i) {
+            T xn = point_data[i*3+0];
+            T yn = point_data[i*3+1];
+            T zn = point_data[i*3+2];
+
+            T xd = x0 - xn;
+            T yd = y0 - yn;
+            T zd = z0 - zn;
+
+            T d = xd*xd + yd*yd + zd*zd;
+
+            result[i-1] = d;
         }
 
-        int num_observations() const { return num_observations_; }
+        calculate3DDistancesSquared<T>(point_data + 3, result + N - 1, N - 1);
 
-        const double *observations() const { return observations_; }
-
-        double *mutable_cameras() { return parameters_; }
-
-        double *mutable_points() { return parameters_ + parameterSize * num_cameras_; }
-
-        double* mutable_wand_length(){
-            return parameters_+num_parameters_-1;
-        }
-
-        double *mutable_camera_for_observation(int i) {
-            return mutable_cameras() + camera_index_[i] * parameterSize;
-        }
-
-        double *mutable_camera_for_index(int i) {
-            return mutable_cameras() + i * parameterSize;
-        }
-
-        double *mutable_point_for_observation(int i) {
-            return mutable_points() + point_index_[i] * pointsSize;
-        }
-
-        double *measurement_for_observation(int i) {
-            return observations_ + points2DSize * i;
-        }
-
-        Eigen::Matrix2d covariance_for_observation(int observation_index, int point_index) {
-            return observations_covar_[observation_index][point_index];
-        }
+    }
 
 
-        virtual traact::vision::CameraCalibration intrinsic_for_observation(size_t index) = 0;
-
-        virtual void setCeresProblem(ceres::Problem* problem) = 0;
-
-
-        //protected:
-
-        int num_cameras_;
-        int num_points_;
-        int num_observations_;
-        int num_parameters_;
-
-        int *point_index_{0};
-        int *camera_index_{0};
-        double *observations_{0};
-        std::vector<std::vector<Eigen::Matrix2d> > observations_covar_;
-        double *parameters_{0};
-        double wandLength_{0};
-
-        size_t parameterSize=7;
-        size_t pointsSize=3;
-        size_t points2DSize=2;
-
-
-    };
 }
 
 #endif //TRAACTMULTI_COSTFUNCTIONUTILS_H

@@ -38,6 +38,7 @@
 #include <traact/math/perspective.h>
 
 #include <traact/ba/cost_function/CeresTargetNPointReprojectionError.h>
+#include <traact/ba/cost_function/CeresRefTargetNPointLengthError.h>
 
 
 void traact::ba::BundleAdjustment::AddCamera(traact::ba::BACamera::Ptr camera) {
@@ -141,18 +142,26 @@ bool traact::ba::BundleAdjustment::Optimize() {
 
             std::vector<Eigen::Matrix2d> point_cov;
             point_cov.resize(target_points_count_, Eigen::Matrix2d::Identity());
-            // TODO use target_points_count_, constexp/template/ Factory for CeresTargetNPointReprojectionError
-            ceres::CostFunction* cost_function =
-                    CeresTargetNPointReprojectionError<4>::Create(points2d, point_cov, intrinsic);
+
+            ceres::CostFunction* cost_function = CeresTargetNPointReprojectionErrorFactory::Create(points2d, point_cov, intrinsic);
 
             double *cam_parameter = GetCameraParameter(cam_idx);
             ceres_problem_->AddResidualBlock(cost_function,
-                                             new ceres::HuberLoss(100), //NULL /* squared loss */,
+                                             NULL, //new ceres::HuberLoss(100), //NULL /* squared loss */,
                                              cam_parameter, target_parameter);
 
             if(cam->isStaticPosition() || cam->isStaticRotation()) {
                 ceres_problem_->SetParameterBlockConstant(cam_parameter);
             }
+        }
+
+        if(target_->IsUseTargetResidual()) {
+
+            ceres::CostFunction* cost_function = CeresRefTargetNPointLengthErrorFactory::Create(target_->GetTargetData(), target_->GetStdDev());
+
+            ceres_problem_->AddResidualBlock(cost_function,
+                                             NULL, //new ceres::HuberLoss(100), //NULL /* squared loss */,
+                                             target_parameter);
         }
     }
 

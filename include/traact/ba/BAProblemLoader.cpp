@@ -154,6 +154,13 @@ bool traact::ba::BAProblemLoader::LoadConfig(YAML::Node config) {
         ba_target->SetTargetData(data);
     }
 
+    if(bool use_target_residual = target_parameter["use_target_residual"].as<bool>()){
+        ba_target->SetUseTargetResidual(use_target_residual);
+    }
+    if(bool target_residual_stddev = target_parameter["target_residual_stddev"].as<double>()){
+        ba_target->SetStdDev(target_residual_stddev);
+    }
+
     spdlog::info("Loaded Target: \n{0}", ba_target->toString());
 
     ba_->SetTarget(ba_target);

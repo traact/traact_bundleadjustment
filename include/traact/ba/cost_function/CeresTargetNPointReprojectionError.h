@@ -50,8 +50,8 @@ namespace traact::ba {
             stddev_.resize(N, std::vector<double>(2,1));
 
             for(int i=0;i<N;++i){
-                stddev_[i][0] = 1;//sqrt(observed_cov_[i](0,0));
-                stddev_[i][1] = 1;//sqrt(observed_cov_[i](1,1));
+                stddev_[i][0] = sqrt(observed_cov_[i](0,0));
+                stddev_[i][1] = sqrt(observed_cov_[i](1,1));
             }
 
         }
@@ -73,8 +73,8 @@ namespace traact::ba {
 
             for(int i=0;i<N;i++){
                 // The error is the difference between the predicted and observed position.
-                residuals[i*2+0] = (observed_[i][0] - p2d[i][0]);// / T(stddev_[i][0]);
-                residuals[i*2+1] = (observed_[i][1] - p2d[i][1]);// / T(stddev_[i][1]);
+                residuals[i*2+0] = (observed_[i][0] - p2d[i][0]) / T(stddev_[i][0]);
+                residuals[i*2+1] = (observed_[i][1] - p2d[i][1]) / T(stddev_[i][1]);
             }
 
 //            {
@@ -113,6 +113,57 @@ namespace traact::ba {
         const double cy;
 
         traact::vision::CameraCalibration m_intrinsics;
+    };
+
+    class CeresTargetNPointReprojectionErrorFactory {
+    public:
+        static ceres::CostFunction* Create(const spatial::Position2DList& observed,
+                                           const std::vector<Eigen::Matrix2d>& observed_cov,
+                                           const traact::vision::CameraCalibration& intrinsics) {
+
+            std::size_t point_count = observed.size();
+            switch (point_count) {
+                case 1:
+                    return CeresTargetNPointReprojectionError<1>::Create(observed, observed_cov, intrinsics);
+                case 2:
+                    return CeresTargetNPointReprojectionError<2>::Create(observed, observed_cov, intrinsics);
+                case 3:
+                    return CeresTargetNPointReprojectionError<3>::Create(observed, observed_cov, intrinsics);
+                case 4:
+                    return CeresTargetNPointReprojectionError<4>::Create(observed, observed_cov, intrinsics);
+                case 5:
+                    return CeresTargetNPointReprojectionError<5>::Create(observed, observed_cov, intrinsics);
+                case 6:
+                    return CeresTargetNPointReprojectionError<6>::Create(observed, observed_cov, intrinsics);
+                case 7:
+                    return CeresTargetNPointReprojectionError<7>::Create(observed, observed_cov, intrinsics);
+                case 8:
+                    return CeresTargetNPointReprojectionError<8>::Create(observed, observed_cov, intrinsics);
+                case 9:
+                    return CeresTargetNPointReprojectionError<9>::Create(observed, observed_cov, intrinsics);
+                case 10:
+                    return CeresTargetNPointReprojectionError<10>::Create(observed, observed_cov, intrinsics);
+                case 11:
+                    return CeresTargetNPointReprojectionError<11>::Create(observed, observed_cov, intrinsics);
+                case 12:
+                    return CeresTargetNPointReprojectionError<12>::Create(observed, observed_cov, intrinsics);
+                case 13:
+                    return CeresTargetNPointReprojectionError<13>::Create(observed, observed_cov, intrinsics);
+                case 14:
+                    return CeresTargetNPointReprojectionError<14>::Create(observed, observed_cov, intrinsics);
+                case 15:
+                    return CeresTargetNPointReprojectionError<15>::Create(observed, observed_cov, intrinsics);
+                case 16:
+                    return CeresTargetNPointReprojectionError<16>::Create(observed, observed_cov, intrinsics);
+                case 0:
+                default:
+                    spdlog::error("unsupported number of observations for CeresTargetNPointReprojectionError");
+                    return 0;
+
+            }
+
+
+        }
     };
 }
 

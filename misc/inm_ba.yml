@@ -6,42 +6,44 @@ ba:
       intrinsic_file:   "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn01/calib.json"
       extrinsic_file:   "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn01/camera2world_opencv.json"
       measurement_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn01/LTarget_points.txt"
-      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn01/world2camera_unity3d_origin_huber.json"
+      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn01/world2camera_unity3d_origin_sq_ref_0.01_2000.json"
     cn02:
       static_position: False
       static_rotation: False
       intrinsic_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn02/calib.json"
       extrinsic_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn02/camera2world_opencv.json"
       measurement_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn02/LTarget_points.txt"
-      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn02/world2camera_unity3d_origin_huber.json"
+      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn02/world2camera_unity3d_origin_sq_ref_0.01_2000.json"
     cn03:
       static_position: False
       static_rotation: False
       intrinsic_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn03/calib.json"
       extrinsic_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn03/camera2world_opencv.json"
       measurement_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn03/LTarget_points.txt"
-      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn03/world2camera_unity3d_origin_huber.json"
+      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn03/world2camera_unity3d_origin_sq_ref_0.01_2000.json"
     cn04:
       static_position: False
       static_rotation: False
       intrinsic_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn04/calib.json"
       extrinsic_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn04/camera2world_opencv.json"
       measurement_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn04/LTarget_points.txt"
-      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn04/world2camera_unity3d_origin_huber.json"
+      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn04/world2camera_unity3d_origin_sq_ref_0.01_2000.json"
     cn05:
       static_position: False
       static_rotation: False
       intrinsic_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn05/calib.json"
       extrinsic_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn05/camera2world_opencv.json"
       measurement_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn05/LTarget_points.txt"
-      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn05/world2camera_unity3d_origin_huber.json"
+      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn05/world2camera_unity3d_origin_sq_ref_0.01_2000.json"
     cn06:
       static_position: False
       static_rotation: False
       intrinsic_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn06/calib.json"
       extrinsic_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn06/camera2world_opencv.json"
       measurement_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn06/LTarget_points.txt"
-      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn06/world2camera_unity3d_origin_huber.json"
+      result_file: "/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn06/world2camera_unity3d_origin_sq_ref_0.01_2000.json"
   target:
     model_file: "/home/frieder/projects/traact_workspace/traact_bundleadjustment/misc/LTarget.json"
+    use_target_residual : True
+    target_residual_stddev : 0.01
     #measurment_file: "/target_3d_tracking.json"

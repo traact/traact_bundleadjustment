@@ -16,7 +16,7 @@ set(LIB_HEADERS include/traact/ba/BundleAdjustment.cpp include/traact/ba/BundleA
 
 # rest of source code
 set(LIB_SOURCES
-        include/traact/ba/BATarget.cpp include/traact/ba/BATarget.h include/traact/ba/BAProblemLoader.cpp include/traact/ba/BAProblemLoader.h include/traact/ba/BAData.cpp include/traact/ba/BAData.h include/traact/ba/cost_function/CostFunctionUtils.h)
+        include/traact/ba/BATarget.cpp include/traact/ba/BATarget.h include/traact/ba/BAProblemLoader.cpp include/traact/ba/BAProblemLoader.h include/traact/ba/BAData.cpp include/traact/ba/BAData.h include/traact/ba/cost_function/CostFunctionUtils.h include/traact/ba/cost_function/CeresRefTargetNPointLengthError.h)
 
 
 # conan is required hard, library name, version and description are configured from conan
@@ -103,6 +103,6 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/traact" # source director
 add_subdirectory(apps)
 
 if (WITH_TESTS)
-    #add_subdirectory(tests)
+    add_subdirectory(tests)
 endif ()
 

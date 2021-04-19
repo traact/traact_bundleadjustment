@@ -53,3 +53,20 @@ std::string traact::ba::BATarget::toString() {
 
     return ss.str();
 }
+
+void traact::ba::BATarget::SetStdDev(double stddev) {
+    residual_stddev_ = stddev;
+
+}
+
+double traact::ba::BATarget::GetStdDev() {
+    return residual_stddev_;
+}
+
+void traact::ba::BATarget::SetUseTargetResidual(bool value) {
+    use_target_residual_ = value;
+}
+
+bool traact::ba::BATarget::IsUseTargetResidual() {
+    return use_target_residual_;
+}
