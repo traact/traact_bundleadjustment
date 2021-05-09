@@ -34,12 +34,15 @@
 #include "BAProblemLoader.h"
 #include <traact/cereal/CerealSpatial.h>
 #include <traact/cereal/CerealVision.h>
+#include <traact/util/YAMLUtil.h>
+#include <traact/util/FileUtil.h>
+#include <cppfs/FilePath.h>
 
 bool missingKey(YAML::Node node, std::string key){
     if(node[key])
         return false;
 
-    spdlog::error("config invalid: missing '{0}}' parameter",key);
+    spdlog::error("config invalid: missing '{0}' parameter",key);
     return true;
 }
 
@@ -50,40 +53,93 @@ bool traact::ba::BAProblemLoader::LoadConfig(std::string config_file) {
 
 bool traact::ba::BAProblemLoader::LoadConfig(YAML::Node config) {
     ba_ = std::make_shared<BundleAdjustment>();
-    if(!config["ba"]){
-        spdlog::error("config invalid: missing 'ba' root section");
+    if(!util::HasValue("ba", config)) {
         return false;
     }
     auto ba_config = config["ba"];
-    if(!ba_config["cameras"]){
-        spdlog::error("config invalid: missing 'cameras' root section");
+    if(!util::HasValue("cameras", ba_config)) {
         return false;
     }
+    if(!util::HasValue("target", ba_config)) {
+        return false;
+    }
+
+
+    auto ba_cameras = ba_config["cameras"];
+    auto ba_target_config = ba_config["target"];
+
+    if(!util::HasValue("model_file", ba_target_config)) {
+        return false;
+    }
+    if(!util::HasValue("target_to_origin_file", ba_target_config)) {
+        return false;
+    }
+
+    std::string target_file = ba_target_config["model_file"].as<std::string>();
+    std::string target_to_origin_file = ba_target_config["target_to_origin_file"].as<std::string>();
+    if(!util::FileExists(target_file, "model_file")){
+        return false;
+    }
+    if(!util::FileExists(target_to_origin_file, "target_to_origin_file")){
+        return false;
+    }
+
+    if(!util::HasValue("default", ba_config)) {
+        return false;
+    }
+    auto default_parameter = ba_config["default"];
+
+    if(!util::HasValue("tracking_root_folder", default_parameter))
+        return false;
+    std::string tracking_root = default_parameter["tracking_root_folder"].as<std::string>();
 
     for(const auto& camera : ba_config["cameras"]){
         std::string camera_name = camera.first.as<std::string>();
         auto parameter = camera.second;
 
-        if(missingKey(parameter, "static_position"))
+        if(!util::HasValue("result_file", parameter))
             return false;
-        if(missingKey(parameter, "static_rotation"))
+        if(!util::HasValue("intrinsic_file", parameter))
             return false;
-        if(missingKey(parameter, "intrinsic_file"))
+        if(!util::HasValue("extrinsic_file", parameter))
             return false;
-        if(missingKey(parameter, "extrinsic_file"))
+        if(!util::HasValue("measurement_file", parameter))
             return false;
-        if(missingKey(parameter, "measurement_file"))
+        if(!util::HasValue("static_position", parameter))
             return false;
-        if(missingKey(parameter, "result_file"))
+        if(!util::HasValue("static_rotation", parameter))
             return false;
+
+
+        std::string measurement_file = parameter["measurement_file"].as<std::string>();
+        std::string result_file = parameter["result_file"].as<std::string>();
+        std::string intrinsic_file = parameter["intrinsic_file"].as<std::string>();
+        std::string extrinsic_file = parameter["extrinsic_file"].as<std::string>();
+
+
+
+        cppfs::FilePath tracking_root_fp(tracking_root);
+        result_file = tracking_root_fp.resolve(result_file).fullPath();
+        intrinsic_file = tracking_root_fp.resolve(intrinsic_file).fullPath();
+        extrinsic_file = tracking_root_fp.resolve(extrinsic_file).fullPath();
+        measurement_file = tracking_root_fp.resolve(measurement_file).fullPath();
+
+        if(!util::FileExists(measurement_file, "measurement_file")){
+            return false;
+        }
+        if(!util::FileExists(extrinsic_file, "extrinsic_file")){
+            return false;
+        }
+        if(!util::FileExists(intrinsic_file, "intrinsic_file")){
+            return false;
+        }
+
+
+
 
 
         bool static_position = parameter["static_position"].as<bool>();
         bool static_rotation = parameter["static_rotation"].as<bool>();
-
-
-
-        std::string result_file = parameter["result_file"].as<std::string>();
 
         BACamera::Ptr ba_cam = std::make_shared<BACamera>(camera_name);
 
@@ -94,28 +150,29 @@ bool traact::ba::BAProblemLoader::LoadConfig(YAML::Node config) {
 
 
 
-        {
-            std::string intrinsic_file = parameter["intrinsic_file"].as<std::string>();
+        try {
             std::ifstream stream;
             stream.open(intrinsic_file);
             cereal::JSONInputArchive archive(stream);
             vision::CameraCalibration data;
             archive(data);
             ba_cam->setIntrinsic(data);
+        } catch(std::exception e){
+            spdlog::spdlog_ex(e.what());
         }
 
-        {
-            std::string extrinsic_file = parameter["extrinsic_file"].as<std::string>();
+        try{
             std::ifstream stream;
             stream.open(extrinsic_file);
             cereal::JSONInputArchive archive(stream);
             spatial::Pose6D data;
             archive(data);
             ba_cam->setExtrinsic(data);
+        } catch(std::exception e){
+            spdlog::spdlog_ex(e.what());
         }
 
-        {
-            std::string measurement_file = parameter["measurement_file"].as<std::string>();
+        try{
             std::ifstream stream;
             stream.open(measurement_file);
             cereal::JSONInputArchive archive(stream);
@@ -127,6 +184,8 @@ bool traact::ba::BAProblemLoader::LoadConfig(YAML::Node config) {
                 ba_cam->SetMeasurement(ts, tmp.second);
             }
             ba_->AddCamera(ba_cam);
+        } catch(std::exception e){
+            spdlog::spdlog_ex(e.what());
         }
 
         spdlog::info("Loaded Camera: \n{0}", ba_cam->toString());
@@ -141,29 +200,40 @@ bool traact::ba::BAProblemLoader::LoadConfig(YAML::Node config) {
 
     BATarget::Ptr ba_target = std::make_shared<BATarget>();
 
-    auto target_parameter = ba_config["target"];
-
-    {
-        std::string measurement_file = target_parameter["model_file"].as<std::string>();
+    try{
         std::ifstream stream;
-        stream.open(measurement_file);
+        stream.open(target_file);
         cereal::JSONInputArchive archive(stream);
 
         spatial::Position3DList data;
         archive(data);
         ba_target->SetTargetData(data);
+    }catch(std::exception e){
+        spdlog::spdlog_ex(e.what());
     }
 
-    if(bool use_target_residual = target_parameter["use_target_residual"].as<bool>()){
+    if(bool use_target_residual = ba_target_config["use_target_residual"].as<bool>()){
         ba_target->SetUseTargetResidual(use_target_residual);
     }
-    if(bool target_residual_stddev = target_parameter["target_residual_stddev"].as<double>()){
+    if(bool target_residual_stddev = ba_target_config["target_residual_stddev"].as<double>()){
         ba_target->SetStdDev(target_residual_stddev);
     }
 
     spdlog::info("Loaded Target: \n{0}", ba_target->toString());
 
     ba_->SetTarget(ba_target);
+
+    try{
+        std::ifstream stream;
+        stream.open(target_to_origin_file);
+        cereal::JSONInputArchive archive(stream);
+
+        spatial::Pose6D data;
+        archive(data);
+        ba_->SetTargetToOrigin(data);
+    }catch(std::exception e){
+        spdlog::spdlog_ex(e.what());
+    }
 
     return true;
 }

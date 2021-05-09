@@ -29,56 +29,32 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef TRAACTMULTI_BUNDLEADJUSTMENT_H
-#define TRAACTMULTI_BUNDLEADJUSTMENT_H
+#ifndef TRAACTMULTI_YAMLUTIL_H
+#define TRAACTMULTI_YAMLUTIL_H
 
-#include "BACamera.h"
-#include "BATarget.h"
-#include <Eigen/Geometry>
-#include <Eigen/Core>
-#include <Eigen/StdVector>
-#include <ceres/ceres.h>
+#include <yaml-cpp/yaml.h>
+#include <spdlog/spdlog.h>
+namespace traact::util  {
+    template<typename T>
+    bool SetValue(T& value, std::string parameter, const YAML::Node& local_value, const YAML::Node& global_value){
+        bool valueSet= false;
+        if(global_value[parameter]){
+            valueSet = true;
+            value = global_value[parameter].as<T>();
+        }
+        if(local_value[parameter]){
+            valueSet = true;
+            value = local_value[parameter].as<T>();
+        }
+        if(!valueSet){
+            spdlog::error("missing parameter value for {0}", parameter);
+        }
+        return valueSet;
+    }
 
-namespace traact::ba {
-    class BundleAdjustment {
-    public:
-        typedef typename std::shared_ptr<BundleAdjustment> Ptr;
-
-        virtual ~BundleAdjustment();
-
-        void AddCamera(BACamera::Ptr camera);
-        void SetTarget(BATarget::Ptr target);
-        void SetTargetToOrigin(spatial::Pose6D pose);
-
-        bool CheckData();
-
-        bool Optimize();
-
-        void SaveResult();
-
-    protected:
-        std::vector<BACamera::Ptr> cameras_;
-        BATarget::Ptr target_;
-        spatial::Pose6D target_to_origin_;
-        std::vector<TimestampType> used_ts_;
-        std::size_t GetCameraMeaCount(TimestampType ts);
-        std::shared_ptr<ceres::Problem> ceres_problem_;
-        double *ceres_parameter_;
-
-        bool TryEstimatePoints(TimestampType ts);
-        bool TryEstimatePoint(TimestampType ts, std::size_t point_idx, Eigen::Vector3d& result);
-
-        std::size_t target_points_count_{6};
-        const std::size_t camera_parameter_size_{7};
-        std::size_t target_parameter_size_{target_points_count_ * 3};
-        double* GetCameraParameter(std::size_t idx);
-        double* GetTargetParameter(std::size_t idx);
-
-
-    };
+    bool HasValue(std::string parameter, const YAML::Node& node) ;
 }
 
 
 
-
-#endif //TRAACTMULTI_BUNDLEADJUSTMENT_H
+#endif //TRAACTMULTI_YAMLUTIL_H

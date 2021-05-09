@@ -1,0 +1,57 @@
+config:
+  do_init_pose: True
+  do_tracking: True
+  do_ba: True
+  show_init_render: True
+  show_tracking_render: True
+ba:
+  cameras:
+    cn01:
+      static_position: True
+      static_rotation: True
+      gray_factor: 2000
+      origin_mkv_file:     "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn01/capture_000000.mkv"
+      tracking_mkv_file:   "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn01/k4a_capture.mkv"
+      intrinsic_file:   "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn01/calib.json"
+      extrinsic_file:   "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn01/camera2world_opencv.json"
+      measurement_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn01/LTarget_points.txt"
+      result_file_init: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn01/world2camera_init.json"
+      result_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn01/world2camera.json"
+    cn02:
+      static_position: False
+      static_rotation: False
+      gray_factor: 2000
+      origin_mkv_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn02/capture_000000.mkv"
+      tracking_mkv_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn02/k4a_capture.mkv"
+      intrinsic_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn02/calib.json"
+      extrinsic_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn02/camera2world_opencv.json"
+      measurement_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn02/LTarget_points.txt"
+      result_file_init: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn02/world2camera_init.json"
+      result_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn02/world2camera.json"
+    cn03:
+      static_position: False
+      static_rotation: False
+      gray_factor: 2000
+      origin_mkv_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn03/capture_000000.mkv"
+      tracking_mkv_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn03/k4a_capture.mkv"
+      intrinsic_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn03/calib.json"
+      extrinsic_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn03/camera2world_opencv.json"
+      measurement_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn03/LTarget_points.txt"
+      result_file_init: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn03/world2camera_init.json"
+      result_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn03/world2camera.json"
+    cn04:
+      static_position: False
+      static_rotation: False
+      gray_factor: 4000
+      origin_mkv_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn04/capture_000000.mkv"
+      tracking_mkv_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn04/k4a_capture.mkv"
+      intrinsic_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn04/calib.json"
+      extrinsic_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn04/camera2world_opencv.json"
+      measurement_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn04/LTarget_points.txt"
+      result_file_init: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn04/world2camera_init.json"
+      result_file: "/media/frieder/System/data/cadaver/atlas_cadaver_or02_calib02/cn04/world2camera.json"
+  target:
+    model_file: "/home/frieder/projects/traact_workspace/traact_bundleadjustment/misc/LTarget.json"
+    use_target_residual : True
+    target_residual_stddev : 0.01
+    #measurment_file: "/target_3d_tracking.json"

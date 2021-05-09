@@ -47,7 +47,6 @@
 
 #include <thread>
 
-bool running = true;
 traact::facade::Facade* myfacade{nullptr};
 
 void ctrlC(int i) {
@@ -73,6 +72,7 @@ int main(int argc, char **argv) {
   std::string points_file;
   std::string video_file;
   std::string result_file;
+    bool debug_render = false;
   std::string result_intr_file = "";
   std::string result_raw_c2w_file = "";
   double gray_factor = 2500;
@@ -84,6 +84,7 @@ int main(int argc, char **argv) {
         ("help", "print this help message")
         ("points_file", po::value<std::string>(&points_file), "File describing the marker target")
         ("video_file", po::value<std::string>(&video_file), "Kinect mkv file")
+            ("debug_render", po::value<bool>(&debug_render), "Show Debug Render")
         ("result_file", po::value<std::string>(&result_file), "Result file, default orientation as used by Konsul Artekmed")
             ("result_raw", po::value<std::string>(&result_raw_c2w_file), "Result file for raw camera to target, opencv result")
             ("result_intr_file", po::value<std::string>(&result_intr_file), "Result intrinsics file")
@@ -96,6 +97,7 @@ int main(int argc, char **argv) {
       inputOptions.add("points_file", 1);
       inputOptions.add("result_file", 1);
       inputOptions.add("gray_factor", 1);
+      inputOptions.add("debug_render", 1);
       inputOptions.add("result_intr_file", 0);
       inputOptions.add("result_raw_c2w_file", 0);
 
@@ -147,8 +149,6 @@ int main(int argc, char **argv) {
             estimate_pose = pattern_graph_ptr->addPattern("estimate_pose", myfacade->instantiatePattern("EstimatePose"));
 
 
-        DefaultPatternInstancePtr
-            sink_pattern = pattern_graph_ptr->addPattern("sink", myfacade->instantiatePattern("DebugWindow"));
     DefaultPatternInstancePtr
             print_pose = pattern_graph_ptr->addPattern("print_pose", myfacade->instantiatePattern("Pose6DPrint"));
     DefaultPatternInstancePtr
@@ -182,11 +182,7 @@ int main(int argc, char **argv) {
 
 
 
-    pattern_graph_ptr->connect("convert_6000", "output", "sink", "input");
-    
-    pattern_graph_ptr->connect("undistorted", "output_calibration", "sink", "input_intrinsics");
-    pattern_graph_ptr->connect("estimate_pose", "output", "sink", "target_pose");
-    pattern_graph_ptr->connect("circle_tracking", "output", "sink", "input_2d_tracking");
+
     
 
 
@@ -204,14 +200,24 @@ int main(int argc, char **argv) {
 
     //std::string file_path = "/media/frieder/System/data/inm_ba/ir05_withTarget/cn03/";
 
+    if(debug_render){
+        DefaultPatternInstancePtr sink_pattern = pattern_graph_ptr->addPattern("sink", myfacade->instantiatePattern("DebugWindow"));
 
-    sink_pattern->pattern_pointer.parameter["WaitForNextFrame"]["value"] = false;
+        pattern_graph_ptr->connect("convert_6000", "output", "sink", "input");
+        pattern_graph_ptr->connect("undistorted", "output_calibration", "sink", "input_intrinsics");
+        pattern_graph_ptr->connect("estimate_pose", "output", "sink", "target_pose");
+        pattern_graph_ptr->connect("circle_tracking", "output", "sink", "input_2d_tracking");
+
+        sink_pattern->pattern_pointer.parameter["WaitForNextFrame"]["value"] = false;
+    }
+
 
     source_pattern->pattern_pointer.parameter["file"]["value"] = video_file;// fmt::format("{0}{1}",file_path, "k4a_capture.mkv");
     source_target_pattern->pattern_pointer.parameter["file"]["value"] = points_file;// "/media/frieder/System/data/inm_ba/LTarget.json";
     write_pose->pattern_pointer.parameter["file"]["value"] = result_file;// fmt::format("{0}{1}",file_path,"world2camera.json");
 
-    convert_pattern_6000->pattern_pointer.parameter["irToGray"]["value"] = gray_factor;
+    convert_pattern_6000->pattern_pointer.parameter["alpha"]["value"] = 255./gray_factor;
+    convert_pattern_6000->pattern_pointer.parameter["beta"]["value"] = 0;
     estimate_pose->pattern_pointer.parameter["forceZFaceCamera"]["value"] = true;
     
 
@@ -273,11 +279,7 @@ int main(int argc, char **argv) {
 
     myfacade->loadDataflow(pattern_graph_ptr);
 
-    myfacade->start();
-    while(running){
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        }
-    myfacade->stop();
+    myfacade->blockingStart();
 
     delete myfacade;
 

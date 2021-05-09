@@ -46,7 +46,6 @@
 #include <traact/spatial.h>
 #include <thread>
 
-bool running = true;
 traact::facade::Facade* myfacade{nullptr};
 
 void ctrlC(int i) {
@@ -59,12 +58,12 @@ std::string getIdxName(std::string name, int idx){
     return fmt::format("{0}_{1}", name, idx);
 }
 
-void addTracking(const traact::DefaultInstanceGraphPtr& pattern_graph_ptr, double idx, int ir2gray, const std::string& mkv_file, const std::string& result_file){
+void addTracking(const traact::DefaultInstanceGraphPtr &pattern_graph_ptr, double idx, int ir2gray,
+                 const std::string &mkv_file, const std::string &result_file, bool debug_render) {
     using namespace traact::facade;
     using namespace traact;
     using namespace traact::dataflow;
 
-    bool with_renderer = true;
 
     DefaultPatternInstancePtr
             source_pattern = pattern_graph_ptr->addPattern(getIdxName("source",idx),myfacade->instantiatePattern("KinectAzureSingleFilePlayer"));
@@ -78,19 +77,6 @@ void addTracking(const traact::DefaultInstanceGraphPtr& pattern_graph_ptr, doubl
             estimate_pose = pattern_graph_ptr->addPattern(getIdxName("estimate_pose",idx), myfacade->instantiatePattern("EstimatePose"));
     DefaultPatternInstancePtr
             write_2dlist = pattern_graph_ptr->addPattern(getIdxName("write_2dList",idx), myfacade->instantiatePattern("FileRecorder_cereal_spatial:Position2DList"));
-
-    DefaultPatternInstancePtr
-            render_image;
-    DefaultPatternInstancePtr
-            render_points;
-    DefaultPatternInstancePtr
-            render_pose6D;
-
-    if(with_renderer){
-                render_image = pattern_graph_ptr->addPattern(getIdxName("render_image",idx), myfacade->instantiatePattern("RenderImage"));
-                render_points = pattern_graph_ptr->addPattern(getIdxName("render_points",idx), myfacade->instantiatePattern("RenderPosition2DList"));
-                render_pose6D = pattern_graph_ptr->addPattern(getIdxName("render_pose6D",idx), myfacade->instantiatePattern("RenderPose6D"));
-    }
 
 
 
@@ -113,11 +99,16 @@ void addTracking(const traact::DefaultInstanceGraphPtr& pattern_graph_ptr, doubl
 
     pattern_graph_ptr->connect(getIdxName("estimate_pose",idx), "output_points", getIdxName("write_2dList",idx), "input");
 
-    if(with_renderer){
+    if(debug_render){
+        DefaultPatternInstancePtr render_image = pattern_graph_ptr->addPattern(getIdxName("render_image",idx), myfacade->instantiatePattern("RenderImage"));
+        DefaultPatternInstancePtr render_points = pattern_graph_ptr->addPattern(getIdxName("render_points",idx), myfacade->instantiatePattern("RenderPosition2DList"));
+        DefaultPatternInstancePtr render_pose6D = pattern_graph_ptr->addPattern(getIdxName("render_pose6D",idx), myfacade->instantiatePattern("RenderPose6D"));
+
         pattern_graph_ptr->connect(getIdxName("convert_6000",idx), "output", getIdxName("render_image",idx), "input");
         pattern_graph_ptr->connect(getIdxName("circle_tracking",idx), "output", getIdxName("render_points",idx), "input");
         pattern_graph_ptr->connect(getIdxName("undistorted",idx), "output_calibration", getIdxName("render_pose6D",idx), "input_calibration");
         pattern_graph_ptr->connect(getIdxName("estimate_pose",idx), "output", getIdxName("render_pose6D",idx), "input");
+
 
         render_points->pattern_pointer.parameter["window"]["value"] = getIdxName("render_image",idx);
         render_pose6D->pattern_pointer.parameter["window"]["value"] = getIdxName("render_image",idx);
@@ -125,7 +116,8 @@ void addTracking(const traact::DefaultInstanceGraphPtr& pattern_graph_ptr, doubl
 
 
     source_pattern->pattern_pointer.parameter["file"]["value"] = mkv_file;
-    convert_pattern_6000->pattern_pointer.parameter["irToGray"]["value"] = ir2gray;
+    convert_pattern_6000->pattern_pointer.parameter["alpha"]["value"] = 255./ir2gray;
+    convert_pattern_6000->pattern_pointer.parameter["beta"]["value"] = 0;
     estimate_pose->pattern_pointer.parameter["forceZFaceCamera"]["value"] = false;
 
 
@@ -148,6 +140,7 @@ int main(int argc, char **argv) {
     std::string points_file;
     std::string root_folder;
     std::string result_filename;
+    bool debug_render = false;
     std::vector<double> gray_factor;
     try {
         //describe program options
@@ -158,6 +151,7 @@ int main(int argc, char **argv) {
                 ("points_file", po::value<std::string>(&points_file), "File describing the marker target")
                 ("root_folder", po::value<std::string>(&root_folder), "root folder containing folders with k4a_capture.mkv files")
                 ("result_filename", po::value<std::string>(&result_filename), "Result file")
+                ("debug_render", po::value<bool>(&debug_render), "Show Debug Render")
                 ("gray_factor", po::value<std::vector<double> >()->multitoken(), "16Bit to 8 Bit gray factor for each folder, alphabetical order")
                 ;
 
@@ -166,6 +160,7 @@ int main(int argc, char **argv) {
         inputOptions.add("root_folder", 1);
         inputOptions.add("points_file", 1);
         inputOptions.add("result_filename", 1);
+        inputOptions.add("debug_render", 1);
         inputOptions.add("gray_factor", 1);
 
         // parse options from command line and environment
@@ -209,12 +204,6 @@ int main(int argc, char **argv) {
 
     std::vector<std::string> folders = traact::util::glob_dirs(root_folder);
 
-//    folders.push_back("/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn01/");
-//    folders.push_back("/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn02/");
-//    folders.push_back("/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn03/");
-//    folders.push_back("/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn04/");
-//    folders.push_back("/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn05/");
-//    folders.push_back("/media/frieder/System/data/inm_ba/recording_20210408_ARTCalib_Calib/cn06/");
 
     if(folders.size() < 1){
         spdlog::error("at least one directory with a k4a_capture.mkv file must be present");
@@ -229,7 +218,8 @@ int main(int argc, char **argv) {
     for(int i=0;i<folders.size();++i){
         std::string folder = folders[i];
         double gf = gray_factor[i];
-        addTracking(pattern_graph_ptr, i, gf, fmt::format("{0}/{1}", folder, "k4a_capture.mkv"), fmt::format("{0}/{1}", folder, "LTarget_points.txt"));
+        addTracking(pattern_graph_ptr, i, gf, fmt::format("{0}/{1}", folder, "k4a_capture.mkv"),
+                    fmt::format("{0}/{1}", folder, "LTarget_points.txt"), debug_render);
     }
 
 
@@ -263,11 +253,7 @@ int main(int argc, char **argv) {
 
     myfacade->loadDataflow(pattern_graph_ptr);
 
-    myfacade->start();
-    while(running){
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
-    myfacade->stop();
+    myfacade->blockingStart();
 
     delete myfacade;
 

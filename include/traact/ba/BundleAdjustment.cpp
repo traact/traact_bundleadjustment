@@ -93,6 +93,9 @@ bool traact::ba::BundleAdjustment::Optimize() {
 
     ceres_problem_ = std::make_shared<ceres::Problem>();
 
+    target_points_count_ = target_->GetTargetData().size();
+    target_parameter_size_ = target_points_count_*3;
+
 
     ceres_parameter_ = new double[cameras_.size() * camera_parameter_size_ + used_ts_.size() * target_parameter_size_];
     //ceres_point_parameter_ = new double[used_ts_.size() * size_point_parameter];
@@ -120,7 +123,7 @@ bool traact::ba::BundleAdjustment::Optimize() {
     }
 
 
-
+    std::vector<std::size_t> camera_mea_count(cameras_.size(), 0);
 
     for(std::size_t i=0;i<used_ts_.size();++i){
         TimestampType ts = used_ts_[i];
@@ -137,6 +140,7 @@ bool traact::ba::BundleAdjustment::Optimize() {
             auto cam = cameras_[cam_idx];
             if(!cam->HasMeasurement(ts))
                 continue;
+            camera_mea_count[cam_idx]++;
             auto points2d = cam->GetMeasurement(ts);
             auto intrinsic = cam->getIntrinsic();
 
@@ -147,7 +151,7 @@ bool traact::ba::BundleAdjustment::Optimize() {
 
             double *cam_parameter = GetCameraParameter(cam_idx);
             ceres_problem_->AddResidualBlock(cost_function,
-                                             NULL, //new ceres::HuberLoss(100), //NULL /* squared loss */,
+                                             NULL,//new ceres::HuberLoss(10), //NULL /* squared loss */,
                                              cam_parameter, target_parameter);
 
             if(cam->isStaticPosition() || cam->isStaticRotation()) {
@@ -160,7 +164,7 @@ bool traact::ba::BundleAdjustment::Optimize() {
             ceres::CostFunction* cost_function = CeresRefTargetNPointLengthErrorFactory::Create(target_->GetTargetData(), target_->GetStdDev());
 
             ceres_problem_->AddResidualBlock(cost_function,
-                                             NULL, //new ceres::HuberLoss(100), //NULL /* squared loss */,
+                                             new ceres::HuberLoss(10), //NULL /* squared loss */,
                                              target_parameter);
         }
     }
@@ -184,13 +188,18 @@ bool traact::ba::BundleAdjustment::Optimize() {
     options.parameter_tolerance =1e-8;
     options.max_num_iterations = 50;
 
-    options.num_threads = 1;
+    options.num_threads = 8;
 
 
     ceres::Solver::Summary summary;
 
     ceres::Solve(options, ceres_problem_.get(), &summary);
     spdlog::info("{0}", summary.FullReport());
+
+    spdlog::info("Measurements per camera:");
+    for(int i=0;i<camera_mea_count.size();++i){
+        spdlog::info("camera idx {0}: {1}", i, camera_mea_count[i]);
+    }
 
 //    std::ofstream report_stream((experimentdir/"final_solver_report").string());
 //    report_stream << summary.FullReport();
@@ -207,6 +216,7 @@ void traact::ba::BundleAdjustment::SaveResult() {
     Eigen::Affine3d pose_tmp2 = Eigen::Affine3d::Identity();
     pose_tmp2.rotate(Eigen::Quaterniond(0.7071,-0.7071,0,0) * Eigen::Quaterniond(0.7071,0,0,0.7071));
 
+    spatial::Pose6D origin2target = target_to_origin_.inverse();
 
     for(int i=0;i<cameras_.size();++i){
         auto cam = cameras_[i];
@@ -225,12 +235,14 @@ void traact::ba::BundleAdjustment::SaveResult() {
         w2c_pose = w2c_pose.inverse();
         Eigen::Affine3d world2camera_unity = pose_tmp2 * w2c_pose * pose_tmp;
 
+        spatial::Pose6D final_world2camera_unity = origin2target * world2camera_unity;
+
         std::ofstream stream;
         stream.open(cam->getResultfile());
 
         {
             cereal::JSONOutputArchive archive_(stream);
-            archive_(world2camera_unity);
+            archive_(final_world2camera_unity);
         }
 
         stream.close();
@@ -301,4 +313,9 @@ double *traact::ba::BundleAdjustment::GetCameraParameter(std::size_t idx) {
 double *traact::ba::BundleAdjustment::GetTargetParameter(std::size_t idx) {
     double* ceres_point_parameter_ = ceres_parameter_ + cameras_.size() * camera_parameter_size_;
     return ceres_point_parameter_ + idx * target_parameter_size_;
+}
+
+void traact::ba::BundleAdjustment::SetTargetToOrigin(traact::spatial::Pose6D pose) {
+    target_to_origin_ = pose;
+
 }

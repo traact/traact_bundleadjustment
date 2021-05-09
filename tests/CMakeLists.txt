@@ -26,7 +26,7 @@ target_include_directories(bundleadjustment_tests PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
         )
 
-install(TARGETS core_tests
+install(TARGETS bundleadjustment_tests
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows

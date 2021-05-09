@@ -47,3 +47,19 @@ install(TARGETS artekmed_bundleadjustment
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows
+
+#-----------------------------------------------------
+
+add_executable(artekmed_kinect_registration artekmed_kinect_registration.cpp)
+
+#conan_target_link_libraries(artekmed_target_tracking)
+
+target_link_libraries(artekmed_kinect_registration PUBLIC
+        ${CONAN_PACKAGE_NAME}
+        )
+
+install(TARGETS artekmed_kinect_registration
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows
+
