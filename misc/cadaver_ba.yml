@@ -1,7 +1,7 @@
 config:
-  do_init_pose: False
+  do_init_pose: True
   do_tracking: False
-  do_ba: True
+  do_ba: False
   show_init_render: True
   show_tracking_render: True
 ba:

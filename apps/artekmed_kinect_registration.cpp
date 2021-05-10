@@ -475,7 +475,7 @@ bool DoInit(YAML::Node config, bool debug_render) {
     source_target_pattern->pattern_pointer.parameter["file"]["value"] = target_file;
     DefaultPatternInstancePtr
             read_target2origin_calib = pattern_graph_ptr->addPattern("read_target2origin_calib", global_facade->instantiatePattern("FileReader_cereal_spatial:Pose6D"));
-    read_target2origin_calib->pattern_pointer.parameter["file"]["value"] = "/home/frieder/projects/traact_workspace/traact_bundleadjustment/misc/narvisTarget2charucoMarker.json";
+    read_target2origin_calib->pattern_pointer.parameter["file"]["value"] = target_to_origin_file;
 
 
     int camera_idx = 0;
